@@ -6,6 +6,43 @@ from sqlalchemy_serializer import SerializerMixin
 db = SQLAlchemy()
 
 
+class Bakery(db.Model, SerializerMixin):
+    __tablename__ = "bakeries"
+
+    serialize_rules = ("-baked_goods.bakery",)
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, unique=True)
+
+    baked_goods = db.relationship("BakedGood", backref="bakery", lazy="dynamic")
+
+    def to_dict(self, nested=False):
+        return (
+            {
+                "id": self.id,
+                "name": self.name,
+                "baked_goods": [good.to_dict() for good in self.baked_goods],
+            }
+            if nested
+            else {"id": self.id, "name": self.name}
+        )
+
+
+class BakedGood(db.Model, SerializerMixin):
+    __tablename__ = "baked_goods"
+
+    serialize_rules = ("-bakery.baked_goods",)
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    price = db.Column(db.Float)
+
+    bakery_id = db.Column(db.Integer, db.ForeignKey("bakeries.id"))
+
+    def to_dict(self):
+        return {"id": self.id, "name": self.name, "price": self.price}
+
+
 class Game(db.Model, SerializerMixin):
     __tablename__ = "games"
 
