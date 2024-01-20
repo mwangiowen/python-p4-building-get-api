@@ -32,7 +32,7 @@ genres = [
     "Sports",
     "Party",
     "Trivia",
-    "Sandbox"
+    "Sandbox",
 ]
 
 platforms = [
@@ -66,45 +66,31 @@ platforms = [
 fake = Faker()
 
 with app.app_context():
-
     Review.query.delete()
     User.query.delete()
     Game.query.delete()
 
-    users = []
-    for i in range(100):
-        u = User(name=fake.name(),)
-        users.append(u)
-
+    users = [User(name=fake.name()) for _ in range(100)]
     db.session.add_all(users)
 
-    games = []
-    for i in range(100):
-        g = Game(
+    games = [
+        Game(
             title=fake.sentence(),
             genre=rc(genres),
             platform=rc(platforms),
             price=randint(5, 60),
         )
-        games.append(g)
-
+        for _ in range(100)
+    ]
     db.session.add_all(games)
 
     reviews = []
-    for u in users:
-        for i in range(randint(1, 10)):
-            r = Review(
-                score=randint(0, 10),
-                comment=fake.sentence(),
-                user=u,
-                game=rc(games))
-            reviews.append(r)
+    for user in users:
+        for game in games:
+            review = Review(
+                score=randint(0, 10), comment=fake.sentence(), user=user, game=game
+            )
+            reviews.append(review)
 
     db.session.add_all(reviews)
-
-    for g in games:
-        r = rc(reviews)
-        g.review = r
-        reviews.remove(r)
-
     db.session.commit()
